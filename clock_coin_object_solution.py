@@ -1,74 +1,78 @@
 #!/usr/bin/env python3
-# Another solution to https://github.com/atsepkov/puzzles/blob/master/interviews/easy/coins-on-clock/README.md
+# A more OO solution to https://github.com/atsepkov/puzzles/blob/master/interviews/easy/coins-on-clock/README.md
 
 class SlotOccupied(Exception):
+
     def __init__(self):
         self.message = 'Invalid placement'
 
+CHAR_MAPPINGS = {
+   0: '_',
+   1: 'P',
+   5: 'N',
+  10: 'D'
+}
+
 class Clock:
-    def __init__( self, clock = None, coin = None ):
-        if not clock:
-            self.coins = [ 0,0,0,0,0,0,0,0,0,0,0,0 ]
+
+    def __init__( self, parent = None, coin = None ):
+        if not parent:
             self.sequence = []
-            self.idx = 0
+            self.hour = 0
+            # array for the follow-on, "most profitable" part of the puzzle, i.e., clock with
+            # highest summation of hour * coin
+            self.hours = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
         else:
-            if clock.occupied():
+            self.hour = ( parent.hour + coin ) % 12
+            if parent.hours[ self.hour ]:
                 raise SlotOccupied()
-            idx = clock.idx
-            self.coins = list( clock.coins )
-            self.sequence = list( clock.sequence )
-            self.coins[idx] = coin
+            self.hours = list( parent.hours )
+            self.hours[ self.hour ] = coin
+            self.sequence = list( parent.sequence )
             self.sequence.append( coin )
-            self.idx = ( idx + coin ) % 12
 
-
-    def occupied( self ):
-        return self.coins[ self.idx ]
 
     def full(self):
-        return 64 == sum( self.coins )
+        return len(self.sequence) == 12
 
     def __str__(self):
-        coins = []
-        for coin in self.coins:
-            coins.append(
-               coin == 0 and '_' or
-               coin == 1 and 'P' or
-               coin == 5 and 'N' or
-               coin == 10 and 'D' 
-            )
-        return ''.join( coins )
+        return ''.join( map( lambda coin: CHAR_MAPPINGS[coin], self.sequence ) )
 
     def validate(self):
+
+        """Replay coin placement by iterating through sequence of placed coins.
+           Ensure that iteration results in 12 unique hours, one coin per hour"""
 
         hours = set()
         idx = 0
         for coin in self.sequence:
-            hours.add( idx )
             idx = ( idx + coin ) % 12
+            hours.add( idx )
 
         return len(hours) == 12
 
-def doit( clock, pennies, nickels, dimes ):
+def doit( parent, pennies, nickels, dimes ):
 
-    if clock.full(): # alternatively: pennies + nickels + dimes == 0
-        print('valid:', clock.validate(), clock )
+    if parent.full():
+        print('valid:', parent.validate(), parent, parent.sequence )
         return
 
     if pennies > 0:
         try:
-            doit( Clock( clock, 1 ), pennies - 1, nickels, dimes )
+            doit( Clock( parent, 1 ), pennies - 1, nickels, dimes )
         except SlotOccupied:
             pass
     if nickels > 0:
         try:
-            doit( Clock( clock, 5 ), pennies, nickels-1, dimes )
+            doit( Clock( parent, 5 ), pennies, nickels-1, dimes )
         except SlotOccupied:
             pass
     if dimes > 0:
         try:
-            doit( Clock( clock, 10 ), pennies, nickels, dimes-1, )
+            doit( Clock( parent, 10 ), pennies, nickels, dimes-1, )
         except SlotOccupied:
             pass
 
 doit(Clock(), 4, 4, 4 )
+#
+# doit(Clock(), 3, 5, 4 ) # Example of varying coin counts

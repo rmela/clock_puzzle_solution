@@ -7,7 +7,7 @@ Clock = namedtuple( 'Clock', ['idx', 'coins', 'sequence' ] )
 
 def clock_to_string( clock ):
     coins = []
-    for coin in clock.coins:
+    for coin in clock.sequence:
         coins.append(
            coin == 0 and '_' or
            coin == 1 and 'P' or
@@ -58,5 +58,5 @@ result = []
 doit( Clock( 0, [0,0,0,0,0,0,0,0,0,0,0,0], []), 4, 4, 4, result )
 
 for clock in result:
-    print( 'valid:', validate( clock ), clock_to_string( clock ) )
+    print( 'valid:', validate( clock ), clock_to_string( clock ), clock.sequence )
 
